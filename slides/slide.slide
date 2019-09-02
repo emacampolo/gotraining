@@ -1,0 +1,145 @@
+Go workshop
+
+* Correctness vs performance
+
+We should first strive to optimize for correctness.
+The lack of performance of your software is gonna come from four places
+
+- Latency: networking and IO
+- Memory allocations and therefore garbage collection
+- Data access: how you access data, how efficiently you access data.
+- Algorithm efficiencies: number of steps
+
+: The hardware is so fast that we should focus on the first 3 problems instead of micro optimizing an algorithm.
+: Correctness first.
+
+* New Relic
+
+.image only-go.png _ 1000
+
+* "Once we start talking about milliseconds of latency, no optimization matters"  B.Kennedy
+
+* 
+
+.image full.png _ 1000
+
+* Type is life!
+: show basics/variables/variables.go
+: We don’t start from scratch. We need to re-learn some of the foundations behind types
+
+* Type is life!
+
+- Type provides us two pieces of information: _size_ and _representation_
+- When variables are being declared to their zero value, use the keyword var
+- *var* is a readability marker that we are declaring and initializing to zero value
+: Zero value plays an integrity role at cost of performance. All memory allocated will be set to zero value
+- When variables are being declared and initialized, use the short variable declaration operator
+- Be consistent
+
+* Struct types
+
+* Value semantics
+
+.image pgm.png _ 900
+
+* GO Scheduler
+
+- When Go program starts up, it’s given a Logical Processor (P) for every virtual core
+.play num_cpu.go /^func main/,/^}/
+- Every P is assigned an OS Thread (“M”). The ‘M’ stands for machine
+- This Thread is still managed by the OS and the OS is still responsible for placing the Thread on a Core for execution
+- Every Go program is also given an initial Goroutine (“G”), which is the path of execution for a Go program
+- Goroutines are application-level threads
+- Just as OS Threads are context-switched on and off a core, Goroutines are context-switched on and off an M
+
+* Value semantics
+: show basics/value/value_semantics.go
+
+* Value semantics
+
+- Everything in GO is pass by *value*
+- There's two types of data that we operate with. It is the *value* *itself*, like the integer value 10, or it's the *value's* *address*
+- Value semantics are a really important part of your ability to keep the heap clean
+- Isolation, immutability, no side effect == multiple copies
+
+* Pointer semantics
+
+* Pointer semantics
+
+- Everything in GO is pass by *value* (addresses too!)
+- Pointers are for sharing
+- We no longer acts in a sandbox
+- Functional programming tries to reduce the side effects by not giving you pointer semantics at all
+- Fixes the perf issue of value semantics at cost of allocation == GC
+- Always ask yourself which semantics are in play!
+
+* Escape Analysis
+
+- When a value could be referenced after the function that constructs the value returns
+- When the compiler determines a value is too large to fit on the stack
+- When the compiler does't know the size of a value at compile time
+- When a value is decoupled through the use of function or interface values
+
+* Semantics guidelines
+
+Types:
+
+- Built-in types: numerics, strings, bool
+- Reference types: slices, maps, channels, interfaces values and functions
+- User defined types
+
+For 1 & 2 we should always use value semantics
+Strings are designed to be copied
+
+_Exception_: You may take the address of a slice or a map only if you're sharing it down the call-stack and to a function that's either named decode or un-marshall.
+
+_Bottom_line_: When in doubt, use value semantics
+
+* Arrays
+
+* Slices
+
+* Methods & Functions
+
+- Methods are functions that give data the ability to exhibit behavior
+- Methods are functions that declare a receiver variable
+- The question is: when do I want a piece of data have behaviour ?
+- Unlike OOP, Go tries to separate state from behavior through encapsulation
+- Functions should be your first choice until they're not reasonable or practical to do so
+- Stick to a single semantic for a given type and be consistent.
+- Data drives the semantic
+
+* Methods & Functions
+
+.code time.go
+
+* Packages
+
+- The first thing we do is to placing files into directories and the last thing we learn to do
+- Packaging directly conflicts with how we have been taught to organize source code in other languages
+- Projects like in C++, C Sharp, Java languages, you're really building a monolithic application as it relates to your source code
+
+* Package mechanics
+
+- Go turns each package into an individual static library, and it’s the static library that creates the physical “firewall”
+- Every folder represents it's own unique API, it's own kind of program boundary. Just like we would have with micro-services
+- From the compiler perspective subpackages do not exist. We want to leverage the hierarchy to give us some indications about relationships
+- All folders, regardless of their physical location, are built into these static libraries and flattened out during compilation
+- Types, variables, functions and anything else you can name inside the package can be exported (“opened”) or unexported (“closed”)
+- Two packages can’t cross-import each other. Imports are a one way street (faster compile times, enforce developers to think about their dependency decisions)
+
+* Package Design Philosophies
+
+- Standardization is important (example: If you have a package named foo y expect to find a foo.go file that acts as an entry point into the package)
+- Packages must provide, not contain. Examples of packages that provide are http, fmt and io. Examples of packages that contain are util, common and helpers.
+- We could either start flat and emerge from there or plan a little bit ahead of time
+- Validate the cost/benefit of each dependency
+- Question imports for the sake of sharing existing types
+- Question imports to others packages at the same level
+
+* Package Oriented Design
+
+- POD allows a developer to identify where a package belongs inside a Go project and the design guidelines the package must respect.
+- It defines what a Go project is and how a Go project is structured
+- Finally, it improves communication between team members and promotes clean package design and project architecture that is discussable
+
