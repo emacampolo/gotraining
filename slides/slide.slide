@@ -172,6 +172,27 @@ _Bottom_line_: When in doubt, use value semantics
 
 * Arrays
 
+* Arrays
+
+    var a [4]int
+
+.image array.png _ 1000
+
+* Slices
+
+    s := make([]byte, 5)
+
+.image slice.png 500 1000
+
+* For-range mechanics
+
+    // Value semantic of the for range
+    for i, _ := range c
+    for _, value := range c
+
+    // Pointer semantic of the for range
+    for i := range c
+
 * Arrays - Value semantics
 
 .play -edit value/array/array.go

@@ -10,7 +10,7 @@ func main() {
 		friends[1] = "Jack"
 
 		if i == 1 {
-			fmt.Printf("After[%s]\n", v)
+			fmt.Println(v)
 		}
 	}
 }

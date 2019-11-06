@@ -8,6 +8,6 @@ func main() {
 
 	for i := range friends {
 		friends = []string{}
-		fmt.Printf("v[%s]\n", friends[i])
+		fmt.Println(friends[i])
 	}
 }
