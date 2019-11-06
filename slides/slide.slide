@@ -1,83 +1,158 @@
 Go workshop
 
-* Correctness vs performance
+* Types
 
-We should first strive to optimize for correctness.
-The lack of performance of your software is gonna come from four places
+* Type provides us two pieces of information: size and representation
 
-- Latency: networking and IO
-- Memory allocations and therefore garbage collection
-- Data access: how you access data, how efficiently you access data.
-- Algorithm efficiencies: number of steps
+    // float tells us it's an IEEE 754 binary decimal
+    // 64 tells us that it's an eight byte value
 
-: The hardware is so fast that we should focus on the first 3 problems instead of micro optimizing an algorithm.
-: Correctness first.
+    var f float64
 
-* New Relic
+    // we know it is an integer but size will depend on the architecture 64 bits (8 bytes) or 32 bits (4 bytes)
 
-.image only-go.png _ 1000
+    var i int
 
-* "Once we start talking about milliseconds of latency, no optimization matters"  B.Kennedy
+    // we explicitly declare its size. We should have a very good reason to do so.
 
-* 
+    var j int64
 
-.image full.png _ 1000
+* Variable declaration and implicit initialization
 
-* Type is life!
-: show basics/variables/variables.go
-: We don’t start from scratch. We need to re-learn some of the foundations behind types
+.play -edit variable/variable.go /START OMIT/,/END OMIT/
 
-* Type is life!
+* Variable declaration and explicit initialization
 
-- Type provides us two pieces of information: _size_ and _representation_
-- When variables are being declared to their zero value, use the keyword var
-- *var* is a readability marker that we are declaring and initializing to zero value
-: Zero value plays an integrity role at cost of performance. All memory allocated will be set to zero value
-- When variables are being declared and initialized, use the short variable declaration operator
-- Be consistent
+    bb := "hello"
+    cc := 3.14159
+    dd := true
+    zz := 1
+
+* var is a readability marker
+
+    x := 0
+    var x int // preferable
+
+    s := ""
+    var s string // preferable
+
+    var i int = 10 // we should avoid this construction
+
+_just_be_consistent_
 
 * Struct types
 
-* Value semantics
+* Struct types
 
-.image pgm.png _ 900
+    // example represents a type with different fields.
+    type example struct {
+    	flag    bool
+    	counter int16
+    	pi      float32
+    }
 
-* GO Scheduler
+    // Declare a variable of type example set to its zero value.
+    var e1 example
 
-- When Go program starts up, it’s given a Logical Processor (P) for every virtual core
-.play num_cpu.go /^func main/,/^}/
-- Every P is assigned an OS Thread (“M”). The ‘M’ stands for machine
-- This Thread is still managed by the OS and the OS is still responsible for placing the Thread on a Core for execution
-- Every Go program is also given an initial Goroutine (“G”), which is the path of execution for a Go program
-- Goroutines are application-level threads
-- Just as OS Threads are context-switched on and off a core, Goroutines are context-switched on and off an M
+    // Declare a variable of type example and init using
+    // a struct literal.
+    e2 := example{
+        flag:    true,
+        counter: 10,
+        pi:      3.141592,
+    }
 
-* Value semantics
-: show basics/value/value_semantics.go
+    // We may see empty literal constructions when initializing to its zero value but we prefer var.
+    // The only time when you see this idiom is when returning from a function for example.
+    // Just be consistent.
+    //e2 := example{}
+
+* Struct types
+
+    func main() {
+        // Declare a variable of an *anonymous* type set to its zero value.
+        var e1 struct {
+            flag    bool
+            counter int16
+            pi      float32
+        }
+
+        // Declare a variable of an anonymous type and init
+        // using a struct literal. Common usage in test tables.
+        e2 := struct {
+            flag    bool
+            counter int16
+            pi      float32
+        }{
+            flag:    true,
+            counter: 10,
+            pi:      3.141592,
+        }
+    }
+
+* Struct types
+    func main() {
+        http.HandleFunc("/", handler(user.NewService()))
+        log.Fatal(http.ListenAndServe(":8080", nil))
+    }
+
+    func handler(s *user.Service) http.HandlerFunc {
+        type request struct {
+            Name string
+        }
+        type response struct {
+            Greeting string `json:"greeting"`
+        }
+        return func(w http.ResponseWriter, r *http.Request) {
+            var input request
+            read(r, &input)
+
+            greeting := s.Execute(input.Name)
+            resp := response{
+                Greeting: greeting,
+            }
+
+            write(w, resp)
+        }
+    }
 
 * Value semantics
 
 - Everything in GO is pass by *value*
 - There's two types of data that we operate with. It is the *value* *itself*, like the integer value 10, or it's the *value's* *address*
 - Value semantics are a really important part of your ability to keep the heap clean
-- Isolation, immutability, no side effect == multiple copies
+- *Pros*: Isolation, immutability, no side effect.
+- *Cons*: multiple copies
 
-* Pointer semantics
+* Value semantics
+
+.play -edit value/semantics/semantics.go /START OMIT/,/END OMIT/
 
 * Pointer semantics
 
 - Everything in GO is pass by *value* (addresses too!)
 - Pointers are for sharing
 - We no longer acts in a sandbox
-- Functional programming tries to reduce the side effects by not giving you pointer semantics at all
 - Fixes the perf issue of value semantics at cost of allocation == GC
 - Always ask yourself which semantics are in play!
+
+* Pointer semantics
+
+.play -edit pointer/semantics/semantics.go /START OMIT/,/END OMIT/
+
+* Value semantics
+
+.play -edit value/factory/factory.go
+
+* Pointer semantics
+
+.play -edit pointer/factory/factory.go
 
 * Escape Analysis
 
 - When a value could be referenced after the function that constructs the value returns
 - When the compiler determines a value is too large to fit on the stack
-- When the compiler does't know the size of a value at compile time
+- When the compiler doesn't know the size of a value at compile time
 - When a value is decoupled through the use of function or interface values
 
 * Semantics guidelines
@@ -97,49 +172,59 @@ _Bottom_line_: When in doubt, use value semantics
 
 * Arrays
 
-* Slices
+* Arrays - Value semantics
+
+.play -edit value/array/array.go
+
+* Arrays - Pointer semantics
+
+.play -edit pointer/array/array.go
+
+* Slices - Value semantics
+
+.play -edit value/slices/slices.go
+
+* Slices - Pointer semantics
+
+.play -edit pointer/slices/slices.go
 
 * Methods & Functions
 
-- Methods are functions that give data the ability to exhibit behavior
-- Methods are functions that declare a receiver variable
-- The question is: when do I want a piece of data have behaviour ?
-- Unlike OOP, Go tries to separate state from behavior through encapsulation
-- Functions should be your first choice until they're not reasonable or practical to do so
-- Stick to a single semantic for a given type and be consistent.
-- Data drives the semantic
+* Methods & Functions
+
+.play -edit methods/example1/example.go /START OMIT/,/END OMIT/
+
+* Methods & Functions
+
+.play -edit methods/example2/example.go /START OMIT/,/END OMIT/
+
+* Mixing semantics - The Horror
+
+.play -edit mixing/mixing.go /START OMIT/,/END OMIT/
 
 * Methods & Functions
 
 .code time.go
 
-* Packages
+* Correctness vs performance
 
-- The first thing we do is to placing files into directories and the last thing we learn to do
-- Packaging directly conflicts with how we have been taught to organize source code in other languages
-- Projects like in C++, C Sharp, Java languages, you're really building a monolithic application as it relates to your source code
+We should first strive to optimize for correctness.
+The lack of performance of your software is gonna come from four places
 
-* Package mechanics
+- Latency ⇒ networking and IO
+- Data access ⇒ how you access data, how efficiently you access data.
+- Memory allocations and therefore garbage collection
+- Algorithm efficiencies ⇒ number of steps
 
-- Go turns each package into an individual static library, and it’s the static library that creates the physical “firewall”
-- Every folder represents it's own unique API, it's own kind of program boundary. Just like we would have with micro-services
-- From the compiler perspective subpackages do not exist. We want to leverage the hierarchy to give us some indications about relationships
-- All folders, regardless of their physical location, are built into these static libraries and flattened out during compilation
-- Types, variables, functions and anything else you can name inside the package can be exported (“opened”) or unexported (“closed”)
-- Two packages can’t cross-import each other. Imports are a one way street (faster compile times, enforce developers to think about their dependency decisions)
+: The hardware is so fast that we should focus on the first 3 problems instead of micro optimizing an algorithm.
+: Correctness first.
 
-* Package Design Philosophies
+* New Relic
 
-- Standardization is important (example: If you have a package named foo y expect to find a foo.go file that acts as an entry point into the package)
-- Packages must provide, not contain. Examples of packages that provide are http, fmt and io. Examples of packages that contain are util, common and helpers.
-- We could either start flat and emerge from there or plan a little bit ahead of time
-- Validate the cost/benefit of each dependency
-- Question imports for the sake of sharing existing types
-- Question imports to others packages at the same level
+.image only-go.png _ 1000
 
-* Package Oriented Design
+* "Once we start talking about milliseconds of latency, no optimization matters"  B.Kennedy
 
-- POD allows a developer to identify where a package belongs inside a Go project and the design guidelines the package must respect.
-- It defines what a Go project is and how a Go project is structured
-- Finally, it improves communication between team members and promotes clean package design and project architecture that is discussable
+*
 
+.image full.png _ 1000
