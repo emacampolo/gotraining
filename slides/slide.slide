@@ -36,7 +36,8 @@ Go workshop
     s := ""
     var s string // preferable
 
-    var i int = 10 // we should avoid this construction
+    var i int = 10 // we should avoid this constructions
+    var i = 10
 
 _just_be_consistent_
 
@@ -51,21 +52,23 @@ _just_be_consistent_
     	pi      float32
     }
 
-    // Declare a variable of type example set to its zero value.
-    var e1 example
+    func main() {
+        // Declare a variable of type example set to its zero value.
+        var e1 example
 
-    // Declare a variable of type example and init using
-    // a struct literal.
-    e2 := example{
-        flag:    true,
-        counter: 10,
-        pi:      3.141592,
+        // Declare a variable of type example and init using
+        // a struct literal.
+        e2 := example {
+            flag:    true,
+            counter: 10,
+            pi:      3.141592,
+        }
+
+        // We may see empty literal constructions when initializing to its zero value but we prefer var.
+        // The only time when you see this idiom is when returning from a function for example.
+        // Just be consistent.
+        //e2 := example{}
     }
-
-    // We may see empty literal constructions when initializing to its zero value but we prefer var.
-    // The only time when you see this idiom is when returning from a function for example.
-    // Just be consistent.
-    //e2 := example{}
 
 * Struct types
 
@@ -159,18 +162,19 @@ _just_be_consistent_
 
 Types:
 
-- Built-in types: numerics, strings, bool
-- Reference types: slices, maps, channels, interfaces values and functions
-- User defined types
+- For Built-in types (1) & Reference types (2) we should always use *value* *semantics*
+- For User defined types we get to decide but we should default to *value* *semantics* if in doubt
 
-For 1 & 2 we should always use value semantics
-Strings are designed to be copied
+(1) numerics, strings, bool
+(2) slices, maps, channels, interfaces values and functions
 
 _Exception_: You may take the address of a slice or a map only if you're sharing it down the call-stack and to a function that's either named decode or un-marshall.
 
-_Bottom_line_: When in doubt, use value semantics
-
 * Arrays
+
+- Its length is part of its type ([4]int and [5]int are distinct, incompatible types)
+- They do not need to be initialized explicitly; the zero value of an array is a ready-to-use array whose elements are themselves zeroed
+- One way to think about arrays is as a sort of struct but with indexed rather than named fields
 
 * Arrays
 
@@ -178,11 +182,72 @@ _Bottom_line_: When in doubt, use value semantics
 
 .image array.png _ 1000
 
+* Reference Types
+
+- Slices, maps, channels, interfaces values and functions (they all have a pointer)
+- Their zero value is nil
+- The make built-in function allocates and initializes an object of type slice, map, or chan
+
 * Slices
+
+- A slice is a descriptor of an array segment.
+
+.image slice1.png
+
+- The pointer points to the first element of the underlying array that is *reachable* through the slice
+- The length is the number of slice elements
+- The capacity is the number of elements in the underlying array (beginning at the element referred to by the slice pointer)
+
+* Slices
+
+    make([]T, len)
+    make([]T, len, cap)
+
+The capacity argument may be omitted, in which case the capacity equals the length.
 
     s := make([]byte, 5)
 
-.image slice.png 500 1000
+.image slice2.png
+
+* Slicing a slice
+
+    s = s[2:4]
+
+.image slice3.png _ 450
+
+    s = s[2:] // == s[2:cap(s)]
+
+.image slice4.png _ 450
+
+_A_slice_cannot_be_grown_beyond_its_capacity._Attempting_to_do_so_will_cause_a_runtime_panic_
+
+* Slicing a slice
+
+    months := [...]string{1: "January", /* ... */, 12: "December"}
+
+.image slice5.png 500 800
+
+* Slice zero value
+
+- The zero value of a slice is _nil_. A nil slice has no underlying array.
+
+    var s []int // len(s) == 0, s == nil
+    s = []int{} // len(s) == 0, s != nil
+
+- If you need to test whether a slice is empty, use len(s) == 0, not s == nil.
+
+- The zero value is usable immediately without make()
+    var nums []int // DON'T use nums := []int{} OR nums := make([]int)
+    if shouldAdd {
+        nums = append(nums, 1)
+    }
+
+- If we know in advance how many elements we are going to append, set the initial capacity to that number
+    s := make([]int, 0, len(e))
+
+* Append
+
+.play -edit value/slices/append.go /START OMIT/,/END OMIT/
 
 * For-range mechanics
 
@@ -226,6 +291,106 @@ _Bottom_line_: When in doubt, use value semantics
 * Methods & Functions
 
 .code time.go
+
+* Interfaces
+
+* An interface type specifies a set of methods that a concrete type must possess
+
+* Interfaces are satisfied implicitly ⇒ convention over configuration
+
+* Interfaces in Java
+
+    interface Speaker {
+        String speak();
+    }
+
+    class Person implements Speaker {
+        @Override
+        public String speak() {
+            return "hi";
+        }
+    }
+
+* Interfaces in GO
+
+    type Speaker interface {
+        Speak() string
+    }
+
+    type Person struct {}
+
+    func (p Person) Speak() string {
+        return "hi"
+    }
+
+* Interface semantics
+
+.play -edit interfaces/example1/example1.go /START OMIT/,/END OMIT/
+
+* Interface semantics
+
+.image interface_value.png 600 _
+
+* A type satisfies an interface if it possesses all the methods the interface requires
+
+* 
+
+.play -edit interfaces/example2/example2.go
+
+* Method sets
+
+- The method set of any other type T consists of all methods declared with receiver type T
+- The method set of the corresponding pointer type *T is the set of all methods declared with receiver *T or T
+
+https://golang.org/ref/spec#Method_sets
+
+* Errors
+
+    type error interface {
+        Error() string
+    }
+
+* Errors
+
+    type errorString struct {
+        s string
+    }
+
+    func (e *errorString) Error() string {
+        return e.s
+    }
+
+    func New(text string) error {
+        return &errorString{text}
+    }
+
+* Errors
+
+    fmt.Println(errors.New("EOF") == errors.New("EOF")) // "false"
+
+*
+
+.play -edit errors/errors.go /START OMIT/,/END OMIT/
+
+* Concurrency
+
+* Concurrency vs Parallelism
+
+*Concurrency* is a property of the code, *parallelism* is a property of the running program
+
+We do not write *parallel* code, only *concurrent* code that we _hope_ will be run in parallel
+
+* "Share memory by communicating, don't communicate by sharing memory."
+
+* Race condition
+
+A race condition occurs when two or more operations must execute in the correct order, but the program has not been written so that this order is guaranteed to be maintained.
+
+.code concurrency/race1.go /START OMIT/,/END OMIT/
+
+- Nothing is printed
+- "the value is 0" is printed
+- "the value is 1" is printed
 
 * Correctness vs performance
 
