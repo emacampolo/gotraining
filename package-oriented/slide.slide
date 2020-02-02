@@ -1,0 +1,48 @@
+Package oriented
+
+* Language mechanics
+
+: escribir simple app con 2 pkg: a y b (con internal)
+
+- Two packages can't cross-import each other
+- Subpackages does not exist
+- internal/ is a special directory name recognised by the go tool which will prevent one package from being imported by another unless both share a common ancestor
+
+* Package oriented design
+
+*  Packaging is the first thing we need but the last thing to learn
+*  Packaging as
+- applying the idea of microservices
+- representing a self contained piece of functionality
+- static library
+
+*  Packaging design allows a dev identify where a package belongs inside a Go project
+*  Packaging design is NOT bound to a single project structure
+
+* Validate dependencies
+
+* Validate the cost/benefit of each dependency
+* Question imports for the sake of sharing existing types
+* Question imports to others packages at the same level
+* If a package wants to import another package at the same level
+- Question the current design
+- If reasonable, move the pkg inside the source tree for the package that want to import it
+- Use the source tree to show the dependency relationship
+
+* Project structure - What not no do
+
+* Package by layer as in other lang
+
+* 
+
+.image bad-layer3.png _ 900
+
+* 
+
+.image bad-layer4.png _ 900
+
+* Projects Kit & Application
+
+: mostrar go-core como kit
+: escrbir un scaffolding desde main.go hasta una estructura avanzada
+: mostrar channel e integration
